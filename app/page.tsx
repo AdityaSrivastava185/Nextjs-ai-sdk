@@ -1,68 +1,73 @@
+"use client"
+
 import Image from "next/image";
+import { useState } from "react";
 
 export default function Home() {
+  const [response, setResponse] = useState<string | null>("");
+  const [prompt, setPrompt] = useState<string | undefined>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>("")
+
+
+  const handleSubmitPrompt = async (e : React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setPrompt("")
+    try {
+      const response = await fetch('/api/completion', {
+        method : "POST",
+        headers:{
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({prompt})
+      })
+      const data = await response.json()
+      if(!response.ok){
+        throw new Error(data.error || "Something went wrong")
+      }
+      setResponse(data.text)
+    } catch (error) {
+      console.log("Error while getting response from selected model")
+      setError(error instanceof Error ? error.message  : "Something went wrong")
+    } finally{
+      setIsLoading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="app-shell flex flex-1 flex-col items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
+      <main className="workspace-panel flex min-h-[calc(100vh-3rem)] w-full max-w-4xl flex-1 flex-col items-center justify-between px-5 pb-28 pt-8 sm:min-h-[calc(100vh-4rem)] sm:px-10 sm:pb-32 sm:pt-12">
+        {error && <div className="text-red-700 ">{error}</div>}
+        <div className="w-full max-w-2xl flex-1">
+         {prompt}
+          {
+            isLoading ? (
+              <div>Loading...</div>
+            ) : (
+              response ? (
+                <div className="whitespace-pre-wrap">{response}</div>
+              )  : (
+                null
+              )
+            )
+          }
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+        <form
+          className="composer-shell fixed bottom-4 left-1/2 z-10 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 sm:bottom-6 sm:w-[calc(100%-3rem)]"
+          onSubmit={handleSubmitPrompt}
+        >
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Ask Anything"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="w-full rounded-2xl border border-zinc-800  px-7 py-3 text-sm font-medium text-zinc-100 shadow-2xl shadow-black/40 outline-none transition placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-4 focus:ring-white/5"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg text-zinc-600">↵</span>
+          </div>
+        </form>
       </main>
     </div>
   );
