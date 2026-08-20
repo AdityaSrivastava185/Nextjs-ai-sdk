@@ -40,7 +40,6 @@ export default function Home() {
       <main className="workspace-panel flex min-h-[calc(100vh-3rem)] w-full max-w-4xl flex-1 flex-col items-center justify-between px-5 pb-28 pt-8 sm:min-h-[calc(100vh-4rem)] sm:px-10 sm:pb-32 sm:pt-12">
         {error && <div className="text-red-700 ">{error}</div>}
         <div className="w-full max-w-2xl flex-1">
-         {prompt}
           {
             isLoading ? (
               <div>Loading...</div>
