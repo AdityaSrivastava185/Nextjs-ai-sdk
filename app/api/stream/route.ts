@@ -8,8 +8,15 @@ export async function POST(req:Request) {
         model: groq("groq/compound"),
         prompt: prompt,
     })
-    return aiStreamResponse.toUIMessageStreamResponse()
-   } catch(error){
+    aiStreamResponse.usage.then((usage) => {
+        console.log({
+            inputToken: usage.inputTokens,
+            outputToken: usage.outputTokens,
+            totalToken: usage.totalTokens,
+        })
+    })
+    return aiStreamResponse.toUIMessageStreamResponse();
+   }catch(error){
     console.log(error);
     return new Response("Unable to stream text", {status: 500})
    }
