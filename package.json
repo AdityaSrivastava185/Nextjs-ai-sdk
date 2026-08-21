@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/groq": "^4.0.28",
+    "@ai-sdk/openai": "^4.0.45",
     "@ai-sdk/react": "^4.0.71",
     "@ai-sdk/xai": "^4.0.40",
     "ai": "^7.0.68",
