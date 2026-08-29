@@ -75,16 +75,21 @@ const Page = () => {
                             );
                           case "file":
                             if (part.mediaType?.startsWith("image/")) {
-                            return (
-                              <Image
-                                key={`${message.id}-${index}`}
-                                src={part.url}
-                                alt={part.filename ?? `attachment-${index}`}
-                                width={500}
-                                height={500}
-                              />
-                            );
-                        }
+                              return (
+                                <Image
+                                  key={`${message.id}-${index}`}
+                                  src={part.url}
+                                  alt={part.filename ?? `attachment-${index}`}
+                                  width={500}
+                                  height={500}
+                                />
+                              );
+                            }
+                            if (part.mediaType?.startsWith("application/pdf")) {
+                              return (
+                                <iframe key={`${message.id} - ${index}`} src={part.url} width={500} height={500} title={part.filename} />
+                              );
+                            }
                           default:
                             return null;
                         }

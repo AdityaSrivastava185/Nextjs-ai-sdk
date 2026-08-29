@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     try {
         const {prompt} = await req.json();
         const {text} = await generateText({
-            model: groq("groq/compound"),
+            model: groq("openai/gpt-oss-120b"),
             prompt:prompt
         })
         return Response.json({text})
