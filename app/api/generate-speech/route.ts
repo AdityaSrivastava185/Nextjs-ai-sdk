@@ -1,27 +1,33 @@
+import { experimental_generateSpeech as generateSpeech } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { generateSpeech } from "ai";
 
 export async function POST(req: Request) {
   try {
     const { text } = await req.json();
 
-    const { audio } = await generateSpeech({
+    if (!text || typeof text !== "string") {
+      return Response.json({ error: "Text is required" }, { status: 400 });
+    }
+
+    const result = await generateSpeech({
       model: openai.speech("tts-1"),
-      text: text,
+      text,
+      voice: "alloy",
     });
 
-    console.log(audio)
-
-    const audioBuffer = new ArrayBuffer(audio.uint8Array.byteLength);
-    new Uint8Array(audioBuffer).set(audio.uint8Array);
+    const audioBuffer = new Uint8Array(result.audio.uint8Array).buffer;
 
     return new Response(audioBuffer, {
       headers: {
-        "Content-Type": audio.mediaType || "audio/mpeg",
+        "Content-Type": result.audio.mediaType,
       },
     });
   } catch (error) {
-    console.error("Error generating speech:", error);
-    return new Response("Unable to generate speech", { status: 500 });
+    console.error("Speech generation error:", error);
+
+    return Response.json(
+      { error: "Unable to generate speech" },
+      { status: 500 },
+    );
   }
 }

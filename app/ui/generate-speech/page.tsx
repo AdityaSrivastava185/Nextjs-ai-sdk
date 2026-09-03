@@ -1,121 +1,72 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 
-export default function GenerateSpeechPage() {
+export default function Home() {
   const [text, setText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasAudio, setHasAudio] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const audioUrlRef = useRef<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    setIsLoading(true);
-    setError(null);
-    setText("");
-
-    if (audioUrlRef.current) {
-      URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = null;
-    }
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-      audioRef.current = null;
-    }
+  async function generateSpeech() {
+    if (!text.trim()) return;
 
     try {
+      setLoading(true);
+
       const response = await fetch("/api/generate-speech", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Unable to generate audio");
+        throw new Error("Unable to generate speech");
       }
 
-      const blob = await response.blob();
-      audioUrlRef.current = URL.createObjectURL(blob);
-      audioRef.current = new Audio(audioUrlRef.current);
+      const audioBlob = await response.blob();
 
-      setHasAudio(true);
-      audioRef.current.play();
+      const url = URL.createObjectURL(audioBlob);
+
+      setAudioUrl(url);
     } catch (error) {
-      console.error("Error generating audio:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong. Please try again."
-      );
-      setHasAudio(false);
+      console.error(error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
-
-  const replayAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play();
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (audioUrlRef.current) {
-        URL.revokeObjectURL(audioUrlRef.current);
-      }
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
-    };
-  }, []);
+  }
 
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 p-8">
+      <h1 className="text-3xl font-bold">
+        AI Text to Speech
+      </h1>
 
-      {isLoading && <div className="text-center mb-4">Generating audio...</div>}
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Enter something to speak..."
+        className="min-h-40 rounded-lg border p-4"
+      />
 
-      {hasAudio && !isLoading && (
-        <button
-          onClick={replayAudio}
-          className="mb-4 bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-        >
-          Replay Audio
-        </button>
-      )}
-
-      <form
-        onSubmit={handleSubmit}
-        className="fixed bottom-0 w-full max-w-md mx-auto left-0 right-0 p-4 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 shadow-lg"
+      <button
+        onClick={generateSpeech}
+        disabled={loading || !text.trim()}
+        className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
       >
-        <div className="flex gap-2">
-          <input
-            className="flex-1 dark:bg-zinc-800 p-2 border border-zinc-300 dark:border-zinc-700 rounded shadow-xl"
-            placeholder="Enter text to convert to speech"
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !text.trim()}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Generate
-          </button>
-        </div>
-      </form>
-    </div>
+        {loading ? "Generating..." : "Generate Speech"}
+      </button>
+
+      {audioUrl && (
+        <audio
+          controls
+          src={audioUrl}
+          className="w-full"
+        />
+      )}
+    </main>
   );
 }
